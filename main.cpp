@@ -354,11 +354,17 @@ int main()
 	ubigint e = phi_n;
     // Compute gcd using extended gcd algorithm
 	ubigint g = gcd(e, phi_n, s, t);
+    // buffer for reading input
+    char buffer[100];
     // Continue while e is not co-prime to phi_n
 	while (g != 1)
     {
 		std::cout << "Enter a public key e: ";
-		std::cin >> e; std::cin.ignore();
+        // Get user input
+        std::cin.getline(buffer, sizeof(buffer));
+        // Convert input to a number
+        e = std::atoi(buffer);
+        // Compute gcd to check if number is valid
 		g = gcd(e, phi_n, s, t);
 		if (g != 1)
         {
