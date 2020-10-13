@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define ubigint unsigned long long int
+
 /**
  * Gets the bearcatII value of a letter from a given character.
  *
@@ -82,12 +84,12 @@ char charFromBearcatII(int letter)
  * @param[length] Length of the string of characters
  * @return Encoding of word as BearcatII in numeric representation
  */
-unsigned long long int toBearcatII(char* word, int length)
+ubigint toBearcatII(char* word, int length)
 {
     // Variable to store the encoding
-    unsigned long long int encoding = 0;
+    ubigint encoding = 0;
     // Variable to hold current offset, start at 27^0
-    unsigned long long int offset = 1;
+    ubigint offset = 1;
 
     // temporary variables for loop
     char letter;
@@ -120,7 +122,7 @@ unsigned long long int toBearcatII(char* word, int length)
  * @param[length] Length of the string of characters
  * @return Decoded form of the message as a string
  */
-char* fromBearcatII(unsigned long long int encoded, int length)
+char* fromBearcatII(ubigint encoded, int length)
 {
     // Allocate memory for returning the string
     char* decoded = new char[length + 1];
@@ -150,13 +152,10 @@ char* fromBearcatII(unsigned long long int encoded, int length)
  * @param[p] Modulus for this operation
  * @return Computed value of x ^ y mod p
  */
-unsigned long long int modPow(
-    unsigned long long int x,
-    unsigned long long int y,
-    unsigned long long int p)
+ubigint modPow(ubigint x, ubigint y, ubigint p)
 {
     // initial result
-    unsigned long long int result = 1;
+    ubigint result = 1;
     // Ensure x is in modulo p
     x %= p;
 
@@ -190,16 +189,16 @@ unsigned long long int modPow(
  *      of being correct when returning true.
  */
 bool millerRabinIteration(
-    unsigned long long int n,
-    unsigned long long int b,
+    ubigint n,
+    ubigint b,
     std::mt19937 &gen,
-    std::uniform_int_distribution<unsigned long long int> &dis)
+    std::uniform_int_distribution<ubigint> &dis)
 {
     // Select a random value in range [2, n - 2]
-    unsigned long long int a = dis(gen);
+    ubigint a = dis(gen);
 
     // Compute a^b % n
-    unsigned long long int x = modPow(a, b, n);
+    ubigint x = modPow(a, b, n);
 
     if (x == 1  || x == n-1)
        return true;
@@ -236,7 +235,7 @@ bool millerRabinIteration(
  *      value of k means more accuracy
  * @returns False if not prime, true if relatively confident the number is prime.
  */
-bool millerRabinPrimalityTest(unsigned long long int n, int k)
+bool millerRabinPrimalityTest(ubigint n, int k)
 {
     // Edge cases for n < 4
     if (n <= 1 || n == 4)
@@ -252,10 +251,10 @@ bool millerRabinPrimalityTest(unsigned long long int n, int k)
     // From this nice stack overflow post https://stackoverflow.com/questions/28115724/getting-big-random-numbers-in-c-c
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned long long int> dis(2, n - 2);
+    std::uniform_int_distribution<ubigint> dis(2, n - 2);
 
     // Find positive integers b such that n = 2^b * r + 1 for some r >= 1
-    unsigned long long int b = n - 1;
+    ubigint b = n - 1;
     while (b % 2 == 0)
     {
         b /= 2;
@@ -281,12 +280,12 @@ bool millerRabinPrimalityTest(unsigned long long int n, int k)
  * @param[dis] Distribution to draw random numbers from
  * @returns A randomly selected prime from the distribution
  */
-unsigned long long int findRandomPrimeNumber(
+ubigint findRandomPrimeNumber(
     std::mt19937 &gen,
-    std::uniform_int_distribution<unsigned long long int> &dis)
+    std::uniform_int_distribution<ubigint> &dis)
 {
     // Holding variable for our generated prime number
-    unsigned long long int value;
+    ubigint value;
     do
     {
         // Select a number from the distribution
@@ -303,10 +302,10 @@ unsigned long long int findRandomPrimeNumber(
  * @param[b] Second value
  * @returns greatest common divisor between two values
  */
-unsigned long long int gcd(unsigned long long int a, unsigned long long int b)
+ubigint gcd(ubigint a, ubigint b)
 {
     // Temporary holding variable
-    unsigned long long int temp;
+    ubigint temp;
     // While a != b, compute next step of gcd computation
     while (b != 0)
     {
@@ -323,22 +322,22 @@ int main()
     // Select some values p and q by generating large prime numbers
     // Lets generate them between the range of 2^30 - 1 and 2^32 - 1
     //  to ensure n = pq < 2^64 - 1 (maximum value of long long int)
-    unsigned long long int minValue = 1073741823;
-    unsigned long long int maxValue = 4294967295;
+    ubigint minValue = 1073741823;
+    ubigint maxValue = 4294967295;
     // Create our random number generator
     std::mt19937 gen(time(0));
-    std::uniform_int_distribution<unsigned long long int> dis(minValue, maxValue);
+    std::uniform_int_distribution<ubigint> dis(minValue, maxValue);
     // Randomly select a p and q from the distribution
-    unsigned long long int p = findRandomPrimeNumber(gen, dis);
-    unsigned long long int q = findRandomPrimeNumber(gen, dis);
+    ubigint p = findRandomPrimeNumber(gen, dis);
+    ubigint q = findRandomPrimeNumber(gen, dis);
     // Compute n = nq
-    unsigned long long int n = p * q;
+    ubigint n = p * q;
 
     // debug log n, p, and q to screen
     std::cout << "n: " << n << ", p: " << p << ", q: " << q << std::endl;
 
     // Prompt user for value of e
-    unsigned long long int e;
+    ubigint e;
     std::cout << "Please provide a public key value e: ";
     std::cin >> e;
     // Prompt user for new input until e and n are co-prime
@@ -360,7 +359,7 @@ int main()
 
     // // Encode the user input using bearcatII encoding
     // printf("Input string size: %u, value: %s\n", length, input);
-    // unsigned long long int encoded = toBearcatII(input, length);
+    // ubigint encoded = toBearcatII(input, length);
 
     // // Debug and log this encoding to screen
     // printf("String encoded as numeric value: %u\n", encoded);
