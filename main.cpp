@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <stdio.h>
+#include <random>
 #include <string.h>
 
 using namespace std;
@@ -138,6 +139,140 @@ char* fromBearcatII(unsigned long long int encoded, int length)
     }
     // Return the decoded string
     return decoded;
+}
+
+/**
+ * Raises x to power y in modulo p
+ *
+ * computes x ^ y mod p
+ *
+ * @param[x] value of x
+ * @param[y] Power to raise the value of x to
+ * @param[p] Modulus for this operation
+ * @return Computed value of x ^ y mod p
+ */
+unsigned long long int modPow(
+    unsigned long long int x,
+    unsigned long long int y,
+    unsigned long long int p)
+{
+    // initial result
+    unsigned long long int result = 1;
+    // Ensure x is in modulo p
+    x %= p;
+
+    while(y > 0)
+    {
+        // If pow is odd, multiply x with the result
+        if (y % 2 == 1)
+        {
+            result = (result * x) % p;
+        }
+        // Right shift pow by one binary digit
+        y /= 2;
+        // Square the value x
+        x = (x * x) % p;
+    }
+
+    // return final result
+    return result;
+}
+
+/**
+ * Perform a single iteration of the miller rabin
+ * primality test.
+ *
+ * @param[n] Number to test primality of
+ * @param[b] Some value such that n = 2^b * r + 1 for some r >= 1
+ * @param[gen] Generator for selecting random numbers
+ * @param[dis] Distribution to draw random numbers from,
+ *      should be defined in range [2, n - 2]
+ * @returns True or false. Always correct when false and has a probability of 0.75
+ *      of being correct when returning true.
+ */
+bool millerRabinIteration(
+    unsigned long long int n,
+    unsigned long long int b,
+    std::mt19937 gen,
+    std::uniform_int_distribution<unsigned long long int> dis)
+{
+    // Select a random value in range [2, n - 2]
+    unsigned long long int a = dis(gen);
+
+    // Compute a^b % n
+    unsigned long long int x = modPow(a, b, n);
+
+    if (x == 1  || x == n-1)
+       return true;
+
+    // While b is less than n - 1, for each k iteration
+    while (b < n - 1)
+    {
+        // Square the value of x
+        x = (x * x) % n;
+        b *= 2;
+
+        if (x == 1)
+        {
+            return false;
+        }
+        else if (x == n - 1)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Test to determine if a given integer n is prime using
+ * the Miller-Rabin primality test. This is a probabilistic algorithm
+ * so it will repeat for k interations until it is reasonably sure the value
+ * n is prime. Each iteration of k has a 0.75 probability chance of incorrectly
+ * assuming the number is prime.
+ *
+ * @param[n] Number to test primality of
+ * @param[k] Number of iterations to repeat miller-rabin primality test, higher
+ *      value of k means more accuracy
+ * @returns False if not prime, true if relatively confident the number is prime.
+ */
+bool millerRabinPrimalityTest(unsigned long long int n, int k)
+{
+    // Edge cases for n < 4
+    if (n <= 1 || n == 4)
+    {
+        return false;
+    }
+    if (n == 2 || n == 3)
+    {
+        return true;
+    }
+
+    // Create a random uniform distribution for values between 2 and n - 2
+    // From this nice stack overflow post https://stackoverflow.com/questions/28115724/getting-big-random-numbers-in-c-c
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned long long int> dis(2, n - 2);
+
+    // Find positive integers b such that n = 2^b * r + 1 for some r >= 1
+    unsigned long long int b = n - 1;
+    while (b % 2 == 0)
+    {
+        b /= 2;
+    }
+
+    // Perform test iteratively k times
+    for (int i = 0; i < k; i++)
+    {
+        if (!millerRabinIteration(n, b, gen, dis))
+        {
+            return false;
+        }
+    }
+
+    // return true if it passes all iterations
+    return true;
 }
 
 int main()

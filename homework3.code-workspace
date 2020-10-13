@@ -7,7 +7,13 @@
 	"settings": {
 		"files.associations": {
 			"xstring": "cpp",
-			"stdexcept": "cpp"
-		}
+			"stdexcept": "cpp",
+			"random": "cpp",
+			"cmath": "cpp",
+			"iostream": "cpp"
+		},
+		"cSpell.words": [
+			"Primality"
+		]
 	}
 }
