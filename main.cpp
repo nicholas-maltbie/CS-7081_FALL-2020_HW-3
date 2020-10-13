@@ -95,7 +95,7 @@ ubigint toBearcatII(char* word, int length)
 
     // temporary variables for loop
     char letter;
-    int bearcatIIChar;
+    ubigint bearcatIIChar;
 
     // Go through and encode each character
     for (int pos = 0; pos < length; pos++)
@@ -154,10 +154,10 @@ char* fromBearcatII(ubigint encoded, int length)
  * @param[p] Modulus for this operation
  * @return Computed value of x ^ y mod p
  */
-ubigint modPow(ubigint x, ubigint y, ubigint p)
+bigint modPow(bigint x, bigint y, bigint p)
 {
     // initial result
-    ubigint result = 1;
+    bigint result = 1;
     // Ensure x is in modulo p
     x %= p;
 
@@ -306,7 +306,7 @@ ubigint findRandomPrimeNumber(
  * @param[t] Second component of extended gcd factorization
  * @returns The greatest common divisor of a and b
  */
-ubigint gcd(ubigint a, ubigint b, bigint &s, bigint &t)
+bigint gcd(bigint a, bigint b, bigint &s, bigint &t)
 {
     // Base case when b is zero
     if (b == 0)
@@ -316,10 +316,10 @@ ubigint gcd(ubigint a, ubigint b, bigint &s, bigint &t)
         return a;
     }
     // Compute remainder and values for next iteration
-    ubigint r = a % b;
+    bigint r = a % b;
     bigint s_, t_;
     // Get gcd of next iteration
-    ubigint g = gcd(b, r, s_, t_);
+    bigint g = gcd(b, r, s_, t_);
     // Compute components for this iteration
     t = s_ - t_ * ((a - r) / b);
     s = t_;
@@ -329,10 +329,10 @@ ubigint gcd(ubigint a, ubigint b, bigint &s, bigint &t)
 int main()
 {
     // Select some values p and q by generating large prime numbers
-    // Lets generate them between the range of 2^10 - 1 and 2^20 - 1
-    //  to ensure n = pq < 2^64 - 1 (maximum value of long long int)
-    ubigint minValue = 10230;
-    ubigint maxValue = 10485;
+    // Lets generate them between the range of 2 ^ 15 and 2 ^ 16
+    //  to ensure n = pq < 2^32 - 1 (maximum value of long long int)
+    ubigint minValue = 32768;
+    ubigint maxValue = 65536;
     // Create our random number generator
     std::mt19937 gen(time(0));
     std::uniform_int_distribution<ubigint> dis(minValue, maxValue);
@@ -351,9 +351,9 @@ int main()
     // Compute private key using extended euclidian gcd algorithm
     bigint s, t;
     // Start off assuming e = phi_n to fail at start
-	ubigint e = phi_n;
+	bigint e = phi_n;
     // Compute gcd using extended gcd algorithm
-	ubigint g = gcd(e, phi_n, s, t);
+	bigint g = gcd(e, phi_n, s, t);
     // buffer for reading input
     char buffer[100];
     // Continue while e is not co-prime to phi_n
@@ -401,7 +401,7 @@ int main()
     ubigint decrypted_encoded = modPow(cipher_encoded, s, n);
 
     // Decode from bearcatII and log result to screen
-    char* decrypted_decoded = fromBearcatII(decrypted_encoded, length);
+    char* decrypted_decoded = fromBearcatII(decrypted_encoded, ceil(log(decrypted_encoded) / log(27)));
     std::cout << "Decrypted " << decrypted_decoded << std::endl;
 
     std::cout << std::endl <<
