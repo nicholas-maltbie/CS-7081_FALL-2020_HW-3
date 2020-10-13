@@ -171,7 +171,7 @@ bigint modPow(bigint x, bigint y, bigint p)
         // Right shift pow by one binary digit
         y /= 2;
         // Square the value x
-        x = (x * x) % p;
+        x = (x % p * x % p) % p;
     }
 
     // return final result
