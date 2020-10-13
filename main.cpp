@@ -331,8 +331,8 @@ int main()
     // Select some values p and q by generating large prime numbers
     // Lets generate them between the range of 2^10 - 1 and 2^20 - 1
     //  to ensure n = pq < 2^64 - 1 (maximum value of long long int)
-    ubigint minValue = 1023;
-    ubigint maxValue = 1048575;
+    ubigint minValue = 10230;
+    ubigint maxValue = 10485;
     // Create our random number generator
     std::mt19937 gen(time(0));
     std::uniform_int_distribution<ubigint> dis(minValue, maxValue);
@@ -397,6 +397,15 @@ int main()
     // Decode from bearcatII and log result to screen
     char* decrypted_decoded = fromBearcatII(decrypted_encoded, length);
     std::cout << "Decrypted " << decrypted_decoded << std::endl;
+
+    std::cout << std::endl <<
+        " --- SUMMARY --- " << std::endl <<
+        "p: " << p << std::endl <<
+        "q: " << q << std::endl <<
+        "n: " << n << std::endl <<
+        "M: \"" << M << "\"" << std::endl <<
+        "C: \"" << cipher_text << "\"" << std::endl <<
+        "P: \"" << decrypted_decoded << "\"" << std::endl;
 
     return 0;
 }
