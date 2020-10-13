@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define ubigint unsigned long long int
+#define bigint long long int
 
 /**
  * Gets the bearcatII value of a letter from a given character.
@@ -317,56 +318,107 @@ ubigint gcd(ubigint a, ubigint b)
     return a;
 }
 
+/**
+ * Algorithm to compute extended euclidian gcd
+ */
+ubigint extended_gcd(ubigint a, ubigint b, bigint &s, bigint &t)
+{
+    // base case
+	if (b == 0)
+    {
+		s = 1;
+		t = 0;
+		return a;
+	}
+    // recursive call
+	ubigint r = a % b;
+    ubigint q = a / b;
+
+	bigint s_, t_;
+
+	ubigint ret_val = extended_gcd(b, r, s_, t_);
+
+	t = s_ - q * t_;
+	s = t_;
+
+	return ret_val;
+}
+
 int main()
 {
     // Select some values p and q by generating large prime numbers
-    // Lets generate them between the range of 2^30 - 1 and 2^32 - 1
+    // Lets generate them between the range of 2^20 - 1 and 2^30 - 1
     //  to ensure n = pq < 2^64 - 1 (maximum value of long long int)
-    ubigint minValue = 1073741823;
-    ubigint maxValue = 4294967295;
+    ubigint minValue = 1048575;
+    ubigint maxValue = 1073741823;
     // Create our random number generator
     std::mt19937 gen(time(0));
     std::uniform_int_distribution<ubigint> dis(minValue, maxValue);
     // Randomly select a p and q from the distribution
-    ubigint p = findRandomPrimeNumber(gen, dis);
-    ubigint q = findRandomPrimeNumber(gen, dis);
+    // ubigint p = findRandomPrimeNumber(gen, dis);
+    // ubigint q = findRandomPrimeNumber(gen, dis);
+    ubigint p = 7;
+    ubigint q = 11;
     // Compute n = nq
     ubigint n = p * q;
 
     // debug log n, p, and q to screen
     std::cout << "n: " << n << ", p: " << p << ", q: " << q << std::endl;
 
+    // Compute private key from given public key
+    ubigint phi_n = (p - 1) * (q - 1);
     // Prompt user for value of e
     ubigint e;
+    char input[100];
     std::cout << "Please provide a public key value e: ";
-    std::cin >> e;
+    std::cin.getline(input, sizeof(input));
+    e = std::atoi(input);
     // Prompt user for new input until e and n are co-prime
-    while (gcd(e, n) != 1)
+    while (gcd(e, phi_n) != 1)
     {
         std::cout << "Sorry, " << e << " is not co-prime to " << n << std::endl;
         std::cout << "Please provide another public key value e: ";
-        std::cin >> e;
+        std::cin.getline(input, sizeof(input));
+        e = std::atoi(input);
     }
+    // d is private key
+    bigint d, t;
+    extended_gcd(e, phi_n, d, t);
+    // Ensure private key is greater than zero
+    if (d < 0)
+    {
+        d += phi_n;
+    }
+    std::cout << "e: " << e << ", d: " << d << std::endl;
 
-    // // Holding variable for user input
-    // char input[100];
+    // Get user input for message M
+    // Holding variable for user input
+    char M[100];
 
-    // // prompt user for input and read input
-    // printf("Please provide an input string: ");
-    // std::cin.getline(input, sizeof(input));
-    // // Get the length of user input
-    // int length = strlen(input);
+    // prompt user for input and read input
+    printf("Please provide an input string: ");
+    std::cin.getline(M, sizeof(M));
+    // Get the length of user input
+    int length = strlen(M);
 
-    // // Encode the user input using bearcatII encoding
-    // printf("Input string size: %u, value: %s\n", length, input);
-    // ubigint encoded = toBearcatII(input, length);
+    // Encode the user input using bearcatII encoding
+    std::cout << "M: " << M << std::endl;
+    ubigint encoded = toBearcatII(M, length);
 
-    // // Debug and log this encoding to screen
-    // printf("String encoded as numeric value: %u\n", encoded);
+    // Get encrypted value using rsa C = M ^ e mod n
+    ubigint cipher_encoded = modPow(encoded, e, n);
 
-    // // Decode from bearcatII and log result to screen
-    // char* decoded = fromBearcatII(encoded, length);
-    // printf("String decoded as string %s\n", decoded);
+    // Get the cipher encoded as a string
+    char* cipher_text = fromBearcatII(cipher_encoded, length);
+    std::cout << "C: " << cipher_text << std::endl;
+
+    // Decrypt value using rsa M = C ^ d mod n
+    //    M = M ^ (e * d) mod n, e * d = 1 mod n
+    ubigint decrypted_encoded = modPow(cipher_encoded, d, n);
+
+    // Decode from bearcatII and log result to screen
+    char* decrypted_decoded = fromBearcatII(decrypted_encoded, length);
+    std::cout << "String decrypted as string " << decrypted_decoded << std::endl;
 
     return 0;
 }
