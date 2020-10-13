@@ -1,4 +1,5 @@
 #include <iostream>
+#include <math.h>
 #include <time.h>
 #include <random>
 #include <stdexcept>
@@ -297,68 +298,47 @@ ubigint findRandomPrimeNumber(
 }
 
 /**
- * Compute the greatest common divisor between two values
- *
- * @param[a] First value
- * @param[b] Second value
- * @returns greatest common divisor between two values
- */
-ubigint gcd(ubigint a, ubigint b)
-{
-    // Temporary holding variable
-    ubigint temp;
-    // While a != b, compute next step of gcd computation
-    while (b != 0)
-    {
-        temp = b;
-        b = a % b;
-        a = temp;
-    }
-    // Return final gcd
-    return a;
-}
-
-/**
  * Algorithm to compute extended euclidian gcd
+ * 
+ * @param[a] First number in gcd computation
+ * @param[b] Second number in gcd computation
+ * @param[s] First component of extended gcd factorization
+ * @param[t] Second component of extended gcd factorization
+ * @returns The greatest common divisor of a and b
  */
-ubigint extended_gcd(ubigint a, ubigint b, bigint &s, bigint &t)
+ubigint gcd(ubigint a, ubigint b, bigint &s, bigint &t)
 {
-    // base case
-	if (b == 0)
+    // Base case when b is zero
+    if (b == 0)
     {
-		s = 1;
-		t = 0;
-		return a;
-	}
-    // recursive call
-	ubigint r = a % b;
-    ubigint q = a / b;
-
-	bigint s_, t_;
-
-	ubigint ret_val = extended_gcd(b, r, s_, t_);
-
-	t = s_ - q * t_;
-	s = t_;
-
-	return ret_val;
+        s = 1;
+        t = 0;
+        return a;
+    }
+    // Compute remainder and values for next iteration
+    ubigint r = a % b;
+    bigint s_, t_;
+    // Get gcd of next iteration
+    ubigint g = gcd(b, r, s_, t_);
+    // Compute components for this iteration
+    t = s_ - t_ * ((a - r) / b);
+    s = t_;
+    return g;
 }
 
 int main()
 {
     // Select some values p and q by generating large prime numbers
-    // Lets generate them between the range of 2^20 - 1 and 2^30 - 1
+    // Lets generate them between the range of 2^10 - 1 and 2^20 - 1
     //  to ensure n = pq < 2^64 - 1 (maximum value of long long int)
-    ubigint minValue = 1048575;
-    ubigint maxValue = 1073741823;
+    ubigint minValue = 1023;
+    ubigint maxValue = 1048575;
     // Create our random number generator
     std::mt19937 gen(time(0));
     std::uniform_int_distribution<ubigint> dis(minValue, maxValue);
     // Randomly select a p and q from the distribution
-    // ubigint p = findRandomPrimeNumber(gen, dis);
-    // ubigint q = findRandomPrimeNumber(gen, dis);
-    ubigint p = 7;
-    ubigint q = 11;
+    ubigint p = findRandomPrimeNumber(gen, dis);
+    ubigint q = findRandomPrimeNumber(gen, dis);
     // Compute n = nq
     ubigint n = p * q;
 
@@ -367,29 +347,27 @@ int main()
 
     // Compute private key from given public key
     ubigint phi_n = (p - 1) * (q - 1);
-    // Prompt user for value of e
-    ubigint e;
-    char input[100];
-    std::cout << "Please provide a public key value e: ";
-    std::cin.getline(input, sizeof(input));
-    e = std::atoi(input);
-    // Prompt user for new input until e and n are co-prime
-    while (gcd(e, phi_n) != 1)
+
+    // Compute private key using extended euclidian gcd algorithm
+    bigint s, t;
+    // Start off assuming e = phi_n to fail at start
+	ubigint e = phi_n;
+    // Compute gcd using extended gcd algorithm
+	ubigint g = gcd(e, phi_n, s, t);
+    // Continue while e is not co-prime to phi_n
+	while (g != 1)
     {
-        std::cout << "Sorry, " << e << " is not co-prime to " << n << std::endl;
-        std::cout << "Please provide another public key value e: ";
-        std::cin.getline(input, sizeof(input));
-        e = std::atoi(input);
-    }
-    // d is private key
-    bigint d, t;
-    extended_gcd(e, phi_n, d, t);
-    // Ensure private key is greater than zero
-    if (d < 0)
-    {
-        d += phi_n;
-    }
-    std::cout << "e: " << e << ", d: " << d << std::endl;
+		std::cout << "Enter a public key e: ";
+		std::cin >> e; std::cin.ignore();
+		g = gcd(e, phi_n, s, t);
+		if (g != 1)
+        {
+			std::cout << "Sorry, " << e << " is not co-prime to " << phi_n << std::endl;
+		}
+	}
+
+	if (s < 0) s += phi_n;
+	std::cout << "Private Key: " << s << std::endl;
 
     // Get user input for message M
     // Holding variable for user input
@@ -402,23 +380,23 @@ int main()
     int length = strlen(M);
 
     // Encode the user input using bearcatII encoding
-    std::cout << "M: " << M << std::endl;
+    std::cout << "M: \"" << M << "\"" << std::endl;
     ubigint encoded = toBearcatII(M, length);
 
     // Get encrypted value using rsa C = M ^ e mod n
     ubigint cipher_encoded = modPow(encoded, e, n);
 
     // Get the cipher encoded as a string
-    char* cipher_text = fromBearcatII(cipher_encoded, length);
-    std::cout << "C: " << cipher_text << std::endl;
+    char* cipher_text = fromBearcatII(cipher_encoded, ceil(log(cipher_encoded) / log(27)));
+    std::cout << "C: \"" << cipher_text << "\"" << std::endl;
 
     // Decrypt value using rsa M = C ^ d mod n
     //    M = M ^ (e * d) mod n, e * d = 1 mod n
-    ubigint decrypted_encoded = modPow(cipher_encoded, d, n);
+    ubigint decrypted_encoded = modPow(cipher_encoded, s, n);
 
     // Decode from bearcatII and log result to screen
     char* decrypted_decoded = fromBearcatII(decrypted_encoded, length);
-    std::cout << "String decrypted as string " << decrypted_decoded << std::endl;
+    std::cout << "Decrypted " << decrypted_decoded << std::endl;
 
     return 0;
 }
