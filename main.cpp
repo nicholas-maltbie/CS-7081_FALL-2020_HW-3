@@ -1,10 +1,9 @@
 #include <iostream>
+#include <time.h>
+#include <random>
 #include <stdexcept>
 #include <stdio.h>
-#include <random>
 #include <string.h>
-
-using namespace std;
 
 /**
  * Gets the bearcatII value of a letter from a given character.
@@ -193,8 +192,8 @@ unsigned long long int modPow(
 bool millerRabinIteration(
     unsigned long long int n,
     unsigned long long int b,
-    std::mt19937 gen,
-    std::uniform_int_distribution<unsigned long long int> dis)
+    std::mt19937 &gen,
+    std::uniform_int_distribution<unsigned long long int> &dis)
 {
     // Select a random value in range [2, n - 2]
     unsigned long long int a = dis(gen);
@@ -251,8 +250,8 @@ bool millerRabinPrimalityTest(unsigned long long int n, int k)
 
     // Create a random uniform distribution for values between 2 and n - 2
     // From this nice stack overflow post https://stackoverflow.com/questions/28115724/getting-big-random-numbers-in-c-c
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned long long int> dis(2, n - 2);
 
     // Find positive integers b such that n = 2^b * r + 1 for some r >= 1
@@ -275,25 +274,66 @@ bool millerRabinPrimalityTest(unsigned long long int n, int k)
     return true;
 }
 
+/**
+ * Generate random numbers form a distribution until a given random number is found
+ *
+ * @param[gen] Generator for selecting random numbers
+ * @param[dis] Distribution to draw random numbers from
+ * @returns A randomly selected prime from the distribution
+ */
+unsigned long long int findRandomPrimeNumber(
+    std::mt19937 &gen,
+    std::uniform_int_distribution<unsigned long long int> &dis)
+{
+    // Holding variable for our generated prime number
+    unsigned long long int value;
+    do
+    {
+        // Select a number from the distribution
+        value = dis(gen);
+    // Keep iterating until the found value is prime (with confidence iterations using miler rabin)
+    } while (!millerRabinPrimalityTest(value, 30));
+    return value;
+}
+
 int main()
 {
-    // Holding variable for user input
-    char input[100];
+    // Select some values p and q by generating large prime numbers
+    // Lets generate them between the range of 2^30 - 1 and 2^32 - 1
+    //  to ensure n = pq < 2^64 - 1 (maximum value of long long int)
+    unsigned long long int minValue = 1073741823;
+    unsigned long long int maxValue = 4294967295;
+    // Create our random number generator
+    std::mt19937 gen(time(0));
+    std::uniform_int_distribution<unsigned long long int> dis(minValue, maxValue);
+    // Randomly select a p and q from the distribution
+    unsigned long long int p = findRandomPrimeNumber(gen, dis);
+    unsigned long long int q = findRandomPrimeNumber(gen, dis);
+    // Compute n = nq
+    unsigned long long int n = p * q;
 
-    // prompt user for input and read input
-    printf("Please provide an input string: ");
-    cin.getline(input, sizeof(input));
-    // Get the length of user input
-    int length = strlen(input);
+    // debug log to screen
+    std::cout << "n: " << n << ", p: " << p << ", q: " << q;
 
-    // Encode the user input using bearcatII encoding
-    printf("Input string size: %u, value: %s\n", length, input);
-    unsigned long long int encoded = toBearcatII(input, length);
+    // // Holding variable for user input
+    // char input[100];
 
-    // Debug and log this encoding to screen
-    printf("String encoded as numeric value: %u\n", encoded);
+    // // prompt user for input and read input
+    // printf("Please provide an input string: ");
+    // std::cin.getline(input, sizeof(input));
+    // // Get the length of user input
+    // int length = strlen(input);
 
-    // Decode from bearcatII and log result to screen
-    char* decoded = fromBearcatII(encoded, length);
-    printf("String decoded as string %s\n", decoded);
+    // // Encode the user input using bearcatII encoding
+    // printf("Input string size: %u, value: %s\n", length, input);
+    // unsigned long long int encoded = toBearcatII(input, length);
+
+    // // Debug and log this encoding to screen
+    // printf("String encoded as numeric value: %u\n", encoded);
+
+    // // Decode from bearcatII and log result to screen
+    // char* decoded = fromBearcatII(encoded, length);
+    // printf("String decoded as string %s\n", decoded);
+
+    return 0;
 }
