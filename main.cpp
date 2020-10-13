@@ -154,10 +154,10 @@ char* fromBearcatII(ubigint encoded, int length)
  * @param[p] Modulus for this operation
  * @return Computed value of x ^ y mod p
  */
-bigint modPow(bigint x, bigint y, bigint p)
+ubigint modPow(ubigint x, ubigint y, ubigint p)
 {
     // initial result
-    bigint result = 1;
+    ubigint result = 1;
     // Ensure x is in modulo p
     x %= p;
 
@@ -171,7 +171,7 @@ bigint modPow(bigint x, bigint y, bigint p)
         // Right shift pow by one binary digit
         y /= 2;
         // Square the value x
-        x = (x % p * x % p) % p;
+        x = (x * x) % p;
     }
 
     // return final result
@@ -209,7 +209,7 @@ bool millerRabinIteration(
     while (b < n - 1)
     {
         // Square the value of x
-        x = (x * x) % n;
+        x = modPow(x, 2, n);
         b *= 2;
 
         if (x == 1)
