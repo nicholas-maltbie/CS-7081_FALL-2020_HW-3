@@ -296,6 +296,28 @@ unsigned long long int findRandomPrimeNumber(
     return value;
 }
 
+/**
+ * Compute the greatest common divisor between two values
+ *
+ * @param[a] First value
+ * @param[b] Second value
+ * @returns greatest common divisor between two values
+ */
+unsigned long long int gcd(unsigned long long int a, unsigned long long int b)
+{
+    // Temporary holding variable
+    unsigned long long int temp;
+    // While a != b, compute next step of gcd computation
+    while (b != 0)
+    {
+        temp = b;
+        b = a % b;
+        a = temp;
+    }
+    // Return final gcd
+    return a;
+}
+
 int main()
 {
     // Select some values p and q by generating large prime numbers
@@ -312,8 +334,20 @@ int main()
     // Compute n = nq
     unsigned long long int n = p * q;
 
-    // debug log to screen
-    std::cout << "n: " << n << ", p: " << p << ", q: " << q;
+    // debug log n, p, and q to screen
+    std::cout << "n: " << n << ", p: " << p << ", q: " << q << std::endl;
+
+    // Prompt user for value of e
+    unsigned long long int e;
+    std::cout << "Please provide a public key value e: ";
+    std::cin >> e;
+    // Prompt user for new input until e and n are co-prime
+    while (gcd(e, n) != 1)
+    {
+        std::cout << "Sorry, " << e << " is not co-prime to " << n << std::endl;
+        std::cout << "Please provide another public key value e: ";
+        std::cin >> e;
+    }
 
     // // Holding variable for user input
     // char input[100];
