@@ -1,6 +1,8 @@
 # Homework 3
 
-Nicholas Maltbie
+Group 3
+
+Nick, Shivanjali, Mike, Brennan
 
 Advanced Algorithms class Fall 2020
 
